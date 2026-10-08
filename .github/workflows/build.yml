@@ -1,0 +1,38 @@
+name: Build Nspire Control Center
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential git python3 libboost-all-dev libgmp-dev libmpfr-dev libmpc-dev
+
+    - name: Set up Ndless SDK
+      run: |
+        git clone --recursive https://github.com/ndless-nspire/Ndless.git /tmp/Ndless
+        cd /tmp/Ndless/ndless-sdk
+        make
+        echo "/tmp/Ndless/ndless-sdk/bin" >> $GITHUB_PATH
+
+    - name: Build App
+      run: |
+        export PATH="/tmp/Ndless/ndless-sdk/bin:$PATH"
+        make
+
+    - name: Upload .tns Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: control-center-tns
+        path: "*.tns"
